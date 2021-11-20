@@ -10,7 +10,6 @@ def main():
     # Command line Arguments
     parser = argparse.ArgumentParser("DQN")
     parser.add_argument("--mode", type=str, help="training , play, compare, complare_play, plot", required=True)
-
     parser.add_argument("--type", type=str, help="type 1-->Vanilla DQN , type 2--> Duelling DQN PBR, type 3--> Dueling DQN, "
                                                  "no PBR, type 4-->categorical DQN, type 5--> Duelling DQN"
                                                  " with Noisy layer and PBR, Type 6--> DQN n-steps, type 7 --> "
@@ -32,12 +31,13 @@ def main():
         outcomes= pd.DataFrame(data=[], columns=cols)
 
     # default parameters
-    eps_decay=0.995
-    eps_end = 0.01
-    eps_start = 1.0
-    max_t = 1000
-    n_episodes = 2000
-    algo = args.type
+    eps_decay = 0.995  # decay multiplicator for epsilon greedy algo
+    eps_end = 0.01  # epsilon greedy min threshold. Always leave the possibility to do exploration
+    eps_start = 1.0  # epsilon greedy parameter start always in 1, first action always random
+    max_t = 1000  # max number of steps per episode
+    n_episodes = 2000  # max number of episodes on training phase
+
+    algo = args.type# <-- type of algo to use for training
 
     if args.mode == "training" and algo == "1":  # DQN
         # create DQN agent

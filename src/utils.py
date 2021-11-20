@@ -174,6 +174,7 @@ def plot_play_scores(labels):
     return
 
 def plot_time_all(labels):
+
     """
     plot time to win env . Collect 13 yellow bananas
     """

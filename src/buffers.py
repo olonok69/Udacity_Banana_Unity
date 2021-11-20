@@ -154,9 +154,18 @@ class PrioritizedReplayBuffer:
         self.tree.update(idx, p)
 
 class NPReplayBuffer:
-    """A simple numpy replay buffer."""
+    """
+    A simple numpy replay buffer.
+    Reinforcement learning agent stores the experiences consecutively in the buffer, so adjacent ($s, a, r, s'$)
+    transitions stored are highly likely to have correlation. To remove this, the agent samples experiences uniformly
+    at random from the pool of stored samples $\big( (s, a, r, s') \sim U(D) \big)$.
+    """
 
     def __init__(self, obs_dim: int, size: int, batch_size: int = 32):
+        """
+
+        """
+
         self.obs_buf = np.zeros([size, obs_dim], dtype=np.float32)
         self.next_obs_buf = np.zeros([size, obs_dim], dtype=np.float32)
         self.acts_buf = np.zeros([size], dtype=np.float32)

@@ -6,12 +6,14 @@ from torch.autograd import Variable
 from torch.nn.utils import clip_grad_norm_
 
 BUFFER_SIZE = int(1e5)  # replay buffer size
-BATCH_SIZE = 32         # minibatch size
+BATCH_SIZE = 32         # minibatch size replay from Target Networks
 GAMMA = 0.99            # discount factor
-TAU = 1e-3              # for soft update of target parameters
-LR = 5e-4               # learning rate
-UPDATE_EVERY = 4        # how often to update the network
+TAU = 1e-3              # for soft update of target parameters (when we apply soft update)
+LR = 5e-4               # learning rate for Optimizer. Usually, Adam
+UPDATE_EVERY = 4        # how often to update the network(only for soft update) for hard update fix
+                        # value of 200 and we don’t apply TAU
 
+# if GPU is available move calculations to it
 device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
@@ -19,12 +21,12 @@ device = torch.device(
 class DQN_Agent():
     """
     DQN Agent
-    Interacts with and learns from the environment.
     """
 
     def __init__(self, state_size
                  , action_size,
                  seed,
+                 soft = False,
                  target_update = 200
  ):
         """
@@ -35,14 +37,21 @@ class DQN_Agent():
             state_size (int): dimension of each state
             action_size (int): dimension of each action
             seed (int): random seed
-        """
-        self.state_size = state_size
-        self.action_size = action_size
-        self.seed = random.seed(seed)
+            soft (bool): use of soft or hard update of target Network. Default false
+            target_update (int) : default number of steps to update target network
 
-        # Q-Network
+        """
+
+        self.state_size = state_size # observation or state space size
+        self.action_size = action_size # action space size
+        self.seed = random.seed(seed)
+        self.soft = soft # use soft update. each 4 episodes and apply TAU. # default False then apply hard update
+
+        # Q-Network local and target
         self.qnetwork_local = DQN(state_size, action_size).to(device)
         self.qnetwork_target = DQN(state_size, action_size).to(device)
+        self.qnetwork_target.load_state_dict(self.qnetwork_local.state_dict())
+        self.qnetwork_target.eval()
         # optimizer
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
         # Replay memory. Simply Buffer
@@ -69,7 +78,12 @@ class DQN_Agent():
 
         # Learn every UPDATE_EVERY time steps.
         self.t_step = (self.t_step + 1) % UPDATE_EVERY
-        if self.t_step == 0: # sampling from Memory
+        if self.t_step == 0 and self.soft == True: # sampling from Memory
+            # If enough samples are available in memory, get random subset and learn
+            if len(self.memory) > BATCH_SIZE:
+                experiences = self.memory.sample(BATCH_SIZE)
+                self.learn(experiences, GAMMA)
+        else:
             # If enough samples are available in memory, get random subset and learn
             if len(self.memory) > BATCH_SIZE:
                 experiences = self.memory.sample(BATCH_SIZE)
@@ -85,6 +99,7 @@ class DQN_Agent():
 
         # Epsilon-greedy action selection
         if random.random() > eps:
+            # explotation phase
             state = torch.from_numpy(state).float().unsqueeze(0).to(device)
             self.qnetwork_local.eval()
             with torch.no_grad():
@@ -93,6 +108,7 @@ class DQN_Agent():
 
             return np.argmax(action_values.cpu().data.numpy())
         else:
+            # exploration phase
             return random.choice(np.arange(self.action_size))
 
     def learn(self, experiences, gamma):
@@ -111,37 +127,47 @@ class DQN_Agent():
             reward = autograd.Variable(torch.FloatTensor(rewards)).to(device)
             done = autograd.Variable(torch.FloatTensor(dones)).to(device)
 
+        # Predict values local DQN and target DQN
         q_values = self.qnetwork_local(state)
         next_q_values = self.qnetwork_target(next_state)
 
+        # transform the dimension of both to single values
         q_value = q_values.gather(1, action.unsqueeze(1)).squeeze(1)
+        # as target value is a matrix we use max to get the max value of first row
         next_q_value = next_q_values.max(1)[0]
+
+        # calculate expected rewards. If not done consider next_q_value from target network, if done just return
+        # reward for that final state
         expected_q_value = reward + gamma * next_q_value * (1 - done)
 
-        loss = (q_value - autograd.Variable(expected_q_value.data)).pow(2).mean()
-
-        # record loss
+        #  loss calculation
+        loss = F.smooth_l1_loss(q_value, autograd.Variable(expected_q_value.data))
+        # record loss for plotting
         self.losses.append(loss.item())
 
+        # We first apply zero_grad to the optimizer to zero out any gradients as a reset. We then push the loss
+        # backward, and finally perform one step on the optimizer
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
-        self.update_cnt += 1
-        # if hard update is needed
-        if self.update_cnt % self.target_update == 0:
-            self._target_hard_update()
+        if self.soft == False:
+            self.update_cnt += 1
+            # if hard update is needed
+            if self.update_cnt % self.target_update == 0:
+                self.target_hard_update()
+        else:
+            #------------------- update target network ------------------- #
+            self.target_soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
 
-        # ------------------- update target network ------------------- #
-        # self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
-
-    def _target_hard_update(self):
-        """Hard update: target <- local."""
+    def target_hard_update(self):
+        """
+        Hard update: target <- local parameters
+        """
         self.qnetwork_target.load_state_dict(self.qnetwork_local.state_dict())
 
 
-
-    def soft_update(self, local_model, target_model, tau):
+    def target_soft_update(self, local_model, target_model, tau):
         """
         Soft update model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
@@ -347,6 +373,7 @@ class DDQN_Agent():
                  seed,
                  prioritary_buffer=False,
                  noisy=False,
+                 soft=False,
                  target_update=200,
  ):
         """
@@ -361,9 +388,9 @@ class DDQN_Agent():
         self.state_size = state_size
         self.action_size = action_size
         self.seed = random.seed(seed)
-        self.prioritary_buffer = prioritary_buffer
-        self.noisy = noisy
-
+        self.prioritary_buffer = prioritary_buffer # use prioritary Buffer
+        self.noisy = noisy # use Noisy layer
+        self.soft = soft  # use soft update. each 4 episodes and apply TAU. # default False then apply hard update
         # Q-Network
         if self.noisy:
             # with Noisy Layer--> remove epsilon greedy
@@ -372,7 +399,9 @@ class DDQN_Agent():
         else:
             self.qnetwork_local = DDQN(state_size, action_size).to(device)
             self.qnetwork_target = DDQN(state_size, action_size).to(device)
-
+        # initialize target Network
+        self.qnetwork_target.load_state_dict(self.qnetwork_local.state_dict())
+        self.qnetwork_target.eval()
         # optimizer
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
         # Replay memory
@@ -388,13 +417,10 @@ class DDQN_Agent():
         self.update_cnt = 0
 
     def local_prediction(self, state):
-        """Predict Q values for given state using local Q network
-
-        Arguments:
-            state {array-like} -- Dimension of state space
-
-        Returns:
-            [array] -- Predicted Q values for each action in state
+        """
+        Predict Q values for given state using local Q network
+        :param  state: {array-like} -- Dimension of state space
+        returns:[array] -- Predicted Q values for each action in state
         """
         pred = self.qnetwork_local(
             Variable(torch.FloatTensor(state)).to(device)
@@ -436,8 +462,13 @@ class DDQN_Agent():
             self.memory2.add(td_error.item(), (state, action, reward, next_state, done))
             # Learn every UPDATE_FREQUENCY time steps.
             self.t_step = (self.t_step + 1) % UPDATE_EVERY
-            if self.t_step == 0:
+            if self.t_step == 0 and self.soft == True: # IF SOFT uPDATE
 
+                # If enough samples are available in memory, get random subset and learn
+                if len(self.memory2) > BATCH_SIZE:
+                    experiences, idxs, is_weight = self.memory2.sample(BATCH_SIZE)
+                    self.learn(experiences, GAMMA, idxs, is_weight)
+            else:
                 # If enough samples are available in memory, get random subset and learn
                 if len(self.memory2) > BATCH_SIZE:
                     experiences, idxs, is_weight = self.memory2.sample(BATCH_SIZE)
@@ -449,7 +480,12 @@ class DDQN_Agent():
 
             # Learn every UPDATE_EVERY time steps.
             self.t_step = (self.t_step + 1) % UPDATE_EVERY
-            if self.t_step == 0: # sampling from Memory
+            if self.t_step == 0 and self.soft==True: # sampling from Memory
+                # If enough samples are available in memory, get random subset and learn
+                if len(self.memory) > BATCH_SIZE:
+                    experiences = self.memory.sample(BATCH_SIZE)
+                    self.learn(experiences, GAMMA, 0)
+            else:
                 # If enough samples are available in memory, get random subset and learn
                 if len(self.memory) > BATCH_SIZE:
                     experiences = self.memory.sample(BATCH_SIZE)
@@ -462,7 +498,7 @@ class DDQN_Agent():
         :param eps: (float): epsilon, for epsilon-greedy action selection
         :return:
         """
-        if self.noisy:
+        if self.noisy: # iF NOISY LAYER. we dont use epsilon-greedy algo
             state = torch.from_numpy(state).float().unsqueeze(0).to(device)
             # Choose action values according to local model
             self.qnetwork_local.eval()
@@ -474,6 +510,7 @@ class DDQN_Agent():
         else:
             # Epsilon-greedy action selection
             if random.random() > eps:
+                # explotation
                 state = torch.from_numpy(state).float().unsqueeze(0).to(device)
                 self.qnetwork_local.eval()
                 with torch.no_grad():
@@ -482,6 +519,7 @@ class DDQN_Agent():
 
                 return np.argmax(action_values.cpu().data.numpy())
             else:
+                #exploration
                 return random.choice(np.arange(self.action_size))
 
     def learn(self, experiences, gamma, idxs, is_weight=0):
@@ -531,48 +569,58 @@ class DDQN_Agent():
                 self.qnetwork_local.reset_noise()
                 self.qnetwork_target.reset_noise()
 
-            self.update_cnt += 1
-            # if hard update is needed
-            if self.update_cnt % self.target_update == 0:
-                self._target_hard_update()
-            # update target network
-            #self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
+            if self.soft == False:
+                self.update_cnt += 1
+                # if hard update is needed
+                if self.update_cnt % self.target_update == 0:
+                    self._target_hard_update()
+            else:
+                # update target network
+                self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
 
         else:
-            Q_targets_next = self.qnetwork_target(next_states).gather(  # Double DQN
+            # Double DQN take the max in between the prediction calculated by the target network and the prediction
+            # of the local network using the next_state
+            Q_targets_next = self.qnetwork_target(next_states).gather(
                 1, self.qnetwork_local(next_states).argmax(dim=1, keepdim=True)).detach()
-            # Compute Q targets for current states
+
+            # Compute Q targets for current states. same as DQN
             Q_targets = rewards + (gamma * Q_targets_next * (1 - dones))
 
             # Get expected Q values from local model
             Q_expected = self.qnetwork_local(states).gather(1, actions)
 
             # Compute loss
-            # loss = F.mse_loss(Q_expected, Q_targets) replaced mse loss with huber loss.
+            # loss = F.mse_loss(Q_expected, Q_targets) replaced mse loss with smooth for gradient
+            # clipping
             loss = F.smooth_l1_loss(Q_expected, Q_targets)
             # record loss
             self.losses.append(loss.item())
 
-            # Minimize the loss
+            # Minimize the loss and backpropagate it
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+
             # NoisyNet: reset noise
             if self.noisy:
 
                 self.qnetwork_local.reset_noise()
                 self.qnetwork_target.reset_noise()
 
-            # if hard update is needed
-            self.update_cnt += 1
-
-            if self.update_cnt % self.target_update == 0:
-                self._target_hard_update()
-            # ------------------- update target network ------------------- #
-            #self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
+            if self.soft == False:
+                self.update_cnt += 1
+                # if hard update is needed
+                if self.update_cnt % self.target_update == 0:
+                    self._target_hard_update()
+            else:
+                # update target network
+                self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
 
     def _target_hard_update(self):
-        """Hard update: target <- local."""
+        """
+        Hard update: target <- local parameters
+        """
         self.qnetwork_target.load_state_dict(self.qnetwork_local.state_dict())
 
     def soft_update(self, local_model, target_model, tau):

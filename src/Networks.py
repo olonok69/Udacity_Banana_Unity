@@ -10,6 +10,12 @@ import random
 class DQN(nn.Module):
     def __init__(self, num_inputs, num_actions):
         super(DQN, self).__init__()
+        # First layer input defined by a vector size observations space and
+        # 128 nodes. Hidden layer 128 nodes and output layer size equal to
+        # number of actions of the env
+        # Candidate parameters to be optimized are the number of nodes on
+        # the hidden layer
+        # Activation function ReLU(x)=(x) + =max(0,x)
 
         self.layers = nn.Sequential(
             nn.Linear(num_inputs, 128),
@@ -18,36 +24,42 @@ class DQN(nn.Module):
             nn.ReLU(),
             nn.Linear(128, num_actions)
         )
-
+    # forward propagation
     def forward(self, x):
         return self.layers(x)
 
 class DDQN(nn.Module):
+    """
+    Dueling DQ Network . State + advantage value functions
+    """
     def __init__(self, num_inputs, num_outputs):
         super(DDQN, self).__init__()
-
+       # input layer = size observation spaces
         self.feature = nn.Sequential(
             nn.Linear(num_inputs, 128),
             nn.ReLU()
         )
-
+     # hidden layer which calculate the state-value function
+     # output as in DQN number of possible actions
         self.advantage = nn.Sequential(
             nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, num_outputs)
         )
-
+      # hidden layer for advantage function
+      # output continuous value for advantage function
         self.value = nn.Sequential(
             nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, 1)
         )
-
+   # forward propagation of calculations and combination advantage and value function
     def forward(self, x):
         x = self.feature(x)
         advantage = self.advantage(x)
         value = self.value(x)
         return value + advantage - advantage.mean()
+
 
 class Categorical_DQN(nn.Module):
     def __init__(
