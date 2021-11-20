@@ -1,6 +1,6 @@
 
-from Networks import *
-from buffers import *
+from src.Networks import *
+from src.buffers import *
 from typing import Dict, List, Tuple
 from torch.autograd import Variable
 from torch.nn.utils import clip_grad_norm_

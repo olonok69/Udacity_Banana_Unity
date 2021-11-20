@@ -1,10 +1,10 @@
 import torch
 import numpy as np
 import random
-from collections import namedtuple, deque
+from collections import deque
 from typing import Dict, List, Tuple, Deque
-from sumtree import SumTree
-from segment_tree import MinSegmentTree, SumSegmentTree
+from src.sumtree import SumTree
+from src.segment_tree import MinSegmentTree, SumSegmentTree
 import warnings
 warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
 

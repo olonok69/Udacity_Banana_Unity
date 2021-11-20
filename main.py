@@ -1,6 +1,6 @@
 import argparse
-from agents import *
-from utils import *
+from src.agents import *
+from src.utils import *
 import os.path
 import pandas as pd
 import pickle

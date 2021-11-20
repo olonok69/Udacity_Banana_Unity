@@ -121,3 +121,4 @@ Algo,score,episodes,max_t,PER,mode,eps_start,eps_end,eps_decay
 6,10.0,0,1000,0,play,1.0,0.01,0.995
 7,13.0,0,1000,0,play,1.0,0.01,0.995
 1,12.97,2000,1000,0,training,1.0,0.01,0.995
+7,13.0,0,1000,0,play,1.0,0.01,0.995

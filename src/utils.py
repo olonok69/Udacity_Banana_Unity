@@ -71,7 +71,7 @@ def plot_scores_training_all():
     """
     plot all scores 2000 episodes
     """
-    with open('outputs/scores.pickle', 'rb') as handle:
+    with open('../outputs/scores.pickle', 'rb') as handle:
         data = pickle.load(handle)
     labels = []
     text = f"DQN Agent ({max(data['1']['scores']).round(2)})"
@@ -112,7 +112,7 @@ def plot_losses_training_all():
     """
     plot all losses 2000 episodes
     """
-    with open('outputs/scores.pickle', 'rb') as handle:
+    with open('../outputs/scores.pickle', 'rb') as handle:
         data = pickle.load(handle)
 
     # add each loss vector and plot it
@@ -144,8 +144,11 @@ def plot_losses_training_all():
     return
 
 def plot_play_scores(labels):
+    """
 
-    with open('outputs/scores.pickle', 'rb') as handle:
+    """
+
+    with open('../outputs/scores.pickle', 'rb') as handle:
         data = pickle.load(handle)
 
     num_episodes = 2000
@@ -174,7 +177,7 @@ def plot_time_all(labels):
     """
     plot time to win env . Collect 13 yellow bananas
     """
-    with open('outputs/scores.pickle', 'rb') as handle:
+    with open('../outputs/scores.pickle', 'rb') as handle:
         data = pickle.load(handle)
 
     num_episodes = 2000
@@ -203,7 +206,7 @@ def plot_episodes_to_solve_all(labels):
     """
     plot time to win env . Collect 13 yellow bananas
     """
-    with open('outputs/scores.pickle', 'rb') as handle:
+    with open('../outputs/scores.pickle', 'rb') as handle:
         data = pickle.load(handle)
 
     num_episodes = 2000
@@ -267,7 +270,7 @@ def load_env(worker_id, base_port):
     :param worker_id: ID env
     :param base_port: comunications port with unity agent
     """
-    env = UnityEnvironment(file_name="Banana.exe",worker_id=worker_id, base_port=base_port)
+    env = UnityEnvironment(file_name="./env/Banana.exe", worker_id=worker_id, base_port=base_port)
 
     # get the default brain
     brain_name = env.brain_names[0]
