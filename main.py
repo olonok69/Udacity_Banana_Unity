@@ -10,8 +10,8 @@ def main():
     # Command line Arguments
     parser = argparse.ArgumentParser("DQN")
     parser.add_argument("--mode", type=str, help="training , play, compare, complare_play, plot", required=True)
-    parser.add_argument("--type", type=str, help="type 1-->Vanilla DQN , type 2--> Duelling DQN PBR, type 3--> Dueling DQN, "
-                                                 "no PBR, type 4-->categorical DQN, type 5--> Duelling DQN"
+    parser.add_argument("--type", type=str, help="type 1-->Vanilla DQN , type 2--> Duelling DQN PBR, type 3--> Dueling"
+                                                 "DQN, no PBR, type 4-->categorical DQN, type 5--> Duelling DQN"
                                                  " with Noisy layer and PBR, Type 6--> DQN n-steps, type 7 --> "
                                                  "Rainbow DQN", required=True)
     args = parser.parse_args()
