@@ -439,13 +439,14 @@ class DDQN_Agent():
         :return:
         """
         if self.prioritary_buffer:
-            # Get the timporal difference (TD) error for prioritized replay
+            # Get the temporal difference (TD) error for prioritized replay
             self.qnetwork_local.eval()
             self.qnetwork_target.eval()
             with torch.no_grad():
-                # Get old Q value. Not that if continous we need to account for batch dimension
-                old_q = self.local_prediction(state)[action]
 
+                # Get old Q value. Note that if continuous we need to account for batch
+                # dimension
+                old_q = self.local_prediction(state)[action]
                 # Get the new Q value.
                 new_q = reward
                 if not done:
@@ -454,12 +455,14 @@ class DDQN_Agent():
                             Variable(torch.FloatTensor(next_state)).to(device)
                         ).data
                     )
-
+                # Temporal Difference error in absolute to setup weight. If the error
+                # is bigger get more weight
                 td_error = abs(old_q - new_q)
             self.qnetwork_local.train()
             self.qnetwork_target.train()
-            # Save experience in replay memory
+            # Save experience in replay memory buffer
             self.memory2.add(td_error.item(), (state, action, reward, next_state, done))
+
             # Learn every UPDATE_FREQUENCY time steps.
             self.t_step = (self.t_step + 1) % UPDATE_EVERY
             if self.t_step == 0 and self.soft == True: # IF SOFT uPDATE
@@ -548,7 +551,7 @@ class DDQN_Agent():
             predictions = self.qnetwork_local(states).gather(1, actions)
             # Calculate TD targets
             targets = (rewards + (GAMMA * q_targets_next * (1 - dones)))
-            # Update priorities
+            # Update priorities. Calculate current TD errors based in new predictions
             errors = torch.abs(predictions - targets).data.cpu().numpy()
             for i in range(len(errors)):
                 self.memory2.update(idxs[i], errors[i])
@@ -646,10 +649,11 @@ class Cat_DQN_Agent():
                  , action_size,
                  seed,
                  train=False,
-                 target_update= 200,
+                 soft=False,
+                 target_update=200,
                  # Categorical DQN parameters
                  v_min: float = 0.0,
-                 v_max: float = 200.0,
+                 v_max: float = 40.0, # max value of reward for this problem based in our observation no more than 30
                  atom_size: int = 51
  ):
         """
@@ -664,6 +668,7 @@ class Cat_DQN_Agent():
         self.state_size = state_size
         self.action_size = action_size
         self.seed = random.seed(seed)
+        self.soft = soft
         # Categorical DQN parameters
         self.v_min = v_min
         self.v_max = v_max
@@ -709,7 +714,13 @@ class Cat_DQN_Agent():
 
             # Learn every UPDATE_EVERY time steps.
             self.t_step = (self.t_step + 1) % UPDATE_EVERY
-            if self.t_step == 0: # sampling from Memory
+            if self.soft==True: # if soft update target Network
+                if self.t_step == 0: # sampling from Memory
+                    # If enough samples are available in memory, get random subset and learn
+                    if len(self.memory) > BATCH_SIZE:
+                        experiences = self.memory.sample_batch()
+                        self.learn(experiences, GAMMA)
+            else:
                 # If enough samples are available in memory, get random subset and learn
                 if len(self.memory) > BATCH_SIZE:
                     experiences = self.memory.sample_batch()
@@ -730,7 +741,7 @@ class Cat_DQN_Agent():
             with torch.no_grad():
                 action_values = self.qnetwork_local(state)
             self.qnetwork_local.train()
-            # select next action greedy
+            # select next action greedy. and move selected action and state from device to CPU
             selected_action = np.argmax(action_values.detach().cpu().data.numpy())
             state = state.detach().cpu().numpy()
             if self.train:
@@ -765,7 +776,7 @@ class Cat_DQN_Agent():
             next_dist = self.qnetwork_target.dist(next_state)
             next_dist = next_dist[range(BATCH_SIZE), next_action]
 
-            t_z = reward + (1 - done) * GAMMA* self.support
+            t_z = reward + (1 - done) * gamma * self.support
             t_z = t_z.clamp(min=self.v_min, max=self.v_max)
             b = (t_z - self.v_min) / delta_z
             l = b.floor().long()
@@ -799,11 +810,12 @@ class Cat_DQN_Agent():
         self.optimizer.step()
         self.update_cnt += 1
         # if hard update is needed
-        if self.update_cnt % self.target_update == 0:
-            self._target_hard_update()
-
-        # ------------------- update target network ------------------- #
-        #self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
+        if self.soft == False:
+            if self.update_cnt % self.target_update == 0:
+                self._target_hard_update()
+        else:
+            # ------------------- update target network ------------------- #
+            self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
 
     def _target_hard_update(self):
         """Hard update: target <- local."""
@@ -837,12 +849,14 @@ class DQN_Rainbow_Agent():
                  beta: float = 0.6,
                  prior_eps: float = 1e-6,
                  # Categorical parameters
-                 v_min: float = 0.0,
-                 v_max: float = 200.0,
-                 atom_size: int = 51,
+                 v_min: float = 0.0, # minimum value of reward
+                 v_max: float = 30.0, # max value of reward for this problem based in our observation no more than 30
+                 atom_size: int = 31, #number of bins
                  num_frames=2000,
                  train = False,
-                 target_update = 100
+                 target_update = 100,
+                 soft = False
+
  ):
         """
         Initialize an Agent object.
@@ -857,6 +871,7 @@ class DQN_Rainbow_Agent():
         self.action_size = action_size
         self.seed = random.seed(seed)
         self.num_frames = num_frames
+        self.soft =  soft
 
         # PER
         # memory for 1-step Learning
@@ -936,7 +951,13 @@ class DQN_Rainbow_Agent():
 
             # Learn every UPDATE_EVERY time steps.
             self.t_step = (self.t_step + 1) % UPDATE_EVERY
-            if self.t_step == 0:  # sampling from Memory
+            if self.soft == True:
+                if self.t_step == 0:  # sampling from Memory
+                    # If enough samples are available in memory, get random subset and learn
+                    if len(self.memory_n) > BATCH_SIZE:
+                        experiences = self.memory.sample_batch(self.beta)
+                        self.learn(experiences, GAMMA)
+            else:
                 # If enough samples are available in memory, get random subset and learn
                 if len(self.memory_n) > BATCH_SIZE:
                     experiences = self.memory.sample_batch(self.beta)
@@ -1012,14 +1033,14 @@ class DQN_Rainbow_Agent():
         # NoisyNet: reset noise
         self.qnetwork_local.reset_noise()
         self.qnetwork_target.reset_noise()
-        # if hard update is needed
-        self.update_cnt += 1
 
-        if self.update_cnt % self.target_update == 0:
-            self._target_hard_update()
-
-        # ------------------- update target network ------------------- #
-        # self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
+        if self.soft == False: # hard update
+            self.update_cnt += 1
+            if self.update_cnt % self.target_update == 0:
+                self._target_hard_update()
+        else:
+            # ------------------- update target network ------------------- #
+            self.soft_update(self.qnetwork_local, self.qnetwork_target, TAU)
 
     def _target_hard_update(self):
         """Hard update: target <- local."""

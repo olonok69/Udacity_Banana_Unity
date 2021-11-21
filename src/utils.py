@@ -26,6 +26,8 @@ def plot_scores(scores , algo, num_episodes):
         text = "DQN n-Steps Agent"
     elif algo == "7":
         text = "DQN Rainbow Agent"
+    elif algo == "8":
+        text = "Dueling Noisy DQN Agent No PER"
     plt.figure(figsize=(16, 12))
     plt.subplot(111)
     plt.title(f'Algo {text} Number episodes {num_episodes}')
@@ -58,6 +60,8 @@ def plot_losses(losses , algo, num_episodes):
         text = "DQN n-Steps Agent"
     elif algo == "7":
         text = "DQN Rainbow Agent"
+    elif algo == "8":
+        text = "Dueling Noisy DQN Agent No PER"
     plt.figure(figsize=(16, 12))
     plt.subplot(111)
     plt.title(f'Algo {text} Number episodes {num_episodes}')

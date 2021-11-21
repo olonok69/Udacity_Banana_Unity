@@ -18,7 +18,8 @@ class SumTree:
 
     # update to the root node
     def _propagate(self, idx, change):
-        """Propagate priority update up through the tree
+        """
+        Propagate priority update up through the tree
         
         Arguments:
             idx {int} -- index to change
@@ -31,7 +32,8 @@ class SumTree:
             self._propagate(parent, change)
 
     def _retrieve(self, idx, s):
-        """Retrieve sample on lead node
+        """
+        Retrieve sample on lead node
         
         Arguments:
             idx {int} -- index in tree
@@ -51,8 +53,9 @@ class SumTree:
             return self._retrieve(right, s - self.tree[left])
 
     def total(self):
-        """Value of root node
-        
+        """
+        Value of root node
+
         Returns:
             [float] -- root node value
         """
@@ -60,7 +63,8 @@ class SumTree:
         return self.tree[0]
 
     def add(self, p, data):
-        """Add a priority & sample to the tree
+        """
+        Add a priority & sample to the tree
         
         Arguments:
             p {float} -- Priority, i.e. TD error
@@ -77,7 +81,8 @@ class SumTree:
             self.n_entries += 1
 
     def update(self, idx, p):
-        """Update the priority at a given index
+        """
+        Update the priority at a given index
         
         Arguments:
             idx {int} -- index of sample
@@ -89,7 +94,8 @@ class SumTree:
         self._propagate(idx, change)
 
     def get(self, s):
-        """Get idx, priority & sample for value s
+        """
+        Get idx, priority & sample for value s
         
         Arguments:
             s {float} -- value to sample with

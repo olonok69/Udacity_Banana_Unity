@@ -41,9 +41,8 @@ class PrioritizedReplayBuffer:
         initialize class . for the moment only capacity
 
         we use additional term ϵ in order to guarantee all transactions can be possibly sampled: pi=|δi|+ϵ, where ϵ is
-        a small positive constant. value in e.
-        The exponent  α  determines how much prioritization is used, with  α=0  corresponding to the uniform case.
-        Value in a.
+        a small positive constant. value in e. The exponent  α  determines how much prioritization is
+        used, with  α=0  corresponding to the uniform case.
         To remove correlation of observations, it uses uniformly random sampling from the replay buffer.
         Prioritized replay introduces bias because it doesn't sample experiences uniformly at random due to the
         sampling proportion correspoding to TD-error. We can correct this bias by using importance-sampling (IS)
@@ -57,80 +56,75 @@ class PrioritizedReplayBuffer:
         constant. attributes beta and beta_increment_per_sampling
         :param capacity:
         """
-        self.e = 0.01
-        self.a = 0.6
-        self.beta = 0.6
-        self.beta_increment_per_sampling = 0.01
+        self.e = 0.01  # constant to add to TD error
+        self.a = 0.6  # determines how much prioritization is  used, with  α=0  corresponding to the
+                        # uniform case.
+        self.beta = 0.6  # to correct bias by using importance-sampling
+        self.beta_increment_per_sampling = 0.01  # increment of beta per each step
 
         self.tree = SumTree(capacity)
         self.capacity = capacity
 
     def __len__(self):
-        """Number of samples in memory
-
+        """
+        Number of samples in memory
         Returns:
             [int] -- samples
         """
-
         return self.tree.n_entries
 
     def _get_priority(self, error):
-        """Get priority based on error
-
+        """
+        Get priority based on error
         Arguments:
             error {float} -- TD error
-
         Returns:
             [float] -- priority
         """
-
+        # error is equal to error + epsilon constant , elevated to the power of alpha
         return (error + self.e) ** self.a
 
     def add(self, error, sample):
         """Add sample to memory
-
         Arguments:
             error {float} -- TD error
             sample {tuple} -- tuple of (state, action, reward, next_state, done)
         """
-
-        p = self._get_priority(error)
-        self.tree.add(p, sample)
+        p = self._get_priority(error) # get priority of this sample
+        self.tree.add(p, sample) # add the sample to the sumTree
 
     def sample(self, n):
-        """Sample from prioritized replay memory
-
+        """
+        Sample from prioritized replay memory
         Arguments:
             n {int} -- sample size
-
         Returns:
-            [tuple] -- tuple of ((state, action, reward, next_state, done), idxs, is_weight)
+            [tuple] -- tuple of ((state, action, reward, next_state, done), indexes, weights)
         """
-
         batch = []
-        idxs = []
+        indexes = []
+        # total return Value of root node
         segment = self.tree.total() / n
         priorities = []
-
+        # calculate beta. max value will be 1 , but we take the min between 1 and current calculation
         self.beta = np.min([1., self.beta + self.beta_increment_per_sampling])
 
         for i in range(n):
             a = segment * i
             b = segment * (i + 1)
-
+            # random value to decide which side of the tree explore
             s = random.uniform(a, b)
             (idx, p, data) = self.tree.get(s)
-            if p > 0:
+            if p > 0: # add only if weight is hight than 0
                 priorities.append(p)
                 batch.append(data)
-                idxs.append(idx)
+                indexes.append(idx)
 
         # Calculate importance scaling for weight updates
         sampling_probabilities = priorities / self.tree.total()
-        is_weight = np.power(self.tree.n_entries * sampling_probabilities, -self.beta)
-
+        weights = np.power(self.tree.n_entries * sampling_probabilities, -self.beta)
         # Paper states that for stability always scale by 1/max w_i so that we only scale downwards
-        is_weight /= is_weight.max()
+        weights /= weights.max()
 
         # Extract (s, a, r, s', done)
         batch = np.array(batch).transpose()
@@ -140,16 +134,16 @@ class PrioritizedReplayBuffer:
         next_states = np.vstack(batch[3])
         dones = batch[4].astype(int)
 
-        return (states, actions, rewards, next_states, dones), idxs, is_weight
+        return (states, actions, rewards, next_states, dones), indexes, weights
+
 
     def update(self, idx, error):
-        """Update the priority of a sample
-
+        """
+        Update the priority of a sample
         Arguments:
             idx {int} -- index of sample in the sumtree
             error {float} -- updated TD error
         """
-
         p = self._get_priority(error)
         self.tree.update(idx, p)
 

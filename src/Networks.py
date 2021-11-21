@@ -60,16 +60,17 @@ class DDQN(nn.Module):
         value = self.value(x)
         return value + advantage - advantage.mean()
 
-
 class Categorical_DQN(nn.Module):
     def __init__(
             self,
             in_dim: int,
             out_dim: int,
-            atom_size: int,
+            atom_size: int, # number of bins
             support: torch.Tensor
     ):
-        """Initialization."""
+        """
+            Initialization. The Network is the same than a plain DQN
+        """
         super(Categorical_DQN, self).__init__()
 
         self.support = support
@@ -85,17 +86,23 @@ class Categorical_DQN(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward method implementation."""
+        """
+            Forward method implementation. The output of this Network is a matrix size number of actions (rows)
+            where each action have atom_size slices / bins of a distribution
+         """
         dist = self.dist(x)
         q = torch.sum(dist * self.support, dim=2)
 
         return q
 
     def dist(self, x: torch.Tensor) -> torch.Tensor:
-        """Get distribution for atoms."""
+        """
+        Get distribution for atoms. Here we get a distribution per each action represented by a N (atom_size)
+        discrete bins. We get these distributions applying softmax to each bin
+        """
         q_atoms = self.layers(x).view(-1, self.out_dim, self.atom_size)
         dist = F.softmax(q_atoms, dim=-1)
-        dist = dist.clamp(min=1e-3)  # for avoiding nans
+        dist = dist.clamp(min=1e-3)  # clapping the lower band for avoiding nans
 
         return dist
 
@@ -194,20 +201,20 @@ class Noisy_DuelingNetwork(nn.Module):
 
         self.out_dim = out_dim
 
-
-        # set common feature layer
+        # set common feature layer. it doesn’t change from original implementation
         self.feature_layer = nn.Sequential(
             nn.Linear(in_dim, 128),
             nn.ReLU(),
         )
 
-        # set advantage layer
+        # set advantage layer, which now is a noisy layer
         self.advantage_hidden_layer = NoisyLinear(128, 128)
-        self.advantage_layer = NoisyLinear(128, out_dim )
+        self.advantage_layer = NoisyLinear(128, out_dim)
 
-        # set value layer
+        # set value layer , which now is a noisy layer
         self.value_hidden_layer = NoisyLinear(128, 128)
         self.value_layer = NoisyLinear(128, 1)
+
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward method implementation."""
@@ -215,10 +222,12 @@ class Noisy_DuelingNetwork(nn.Module):
 
         value = self.value_layer(feature)
         advantage = self.advantage_layer(feature)
-
+        # forward is defined as the value of this action together with the advantage to take this action
+        # -minus the mean of the expected advantage function values from this state to done
         q = value + advantage - advantage.mean(dim=-1, keepdim=True)
 
         return q
+
 
     def reset_noise(self):
         """Reset all noisy layers."""

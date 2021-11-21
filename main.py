@@ -70,7 +70,7 @@ def main():
         save_scores(outcomes, algo, np.mean(scores_window), epi, max_t, 0, "training",
                     eps_start, eps_end, eps_decay, fname)
         env.close()
-    elif args.mode == "training" and algo == "3":  # Dueling DQN No Prioritary Buffer
+    elif args.mode == "training" and algo == "3":  # Dueling DQN with Prioritary Buffer
         # create DQN agent
         agent = DDQN_Agent(state_size=state_size, action_size=action_size, seed=0, prioritary_buffer=True)
         # train Agent
@@ -81,7 +81,7 @@ def main():
         # plot the scores
         plot_losses(losses, algo, epi)
         # save scores
-        save_scores(outcomes, algo, np.mean(scores_window), epi, max_t, 0, "training",
+        save_scores(outcomes, algo, np.mean(scores_window), epi, max_t, 1, "training",
                     eps_start, eps_end, eps_decay, fname)
 
         env.close()
@@ -112,7 +112,7 @@ def main():
         # plot the scores
         plot_losses(losses, algo, epi)
         # save scores
-        save_scores(outcomes, algo, np.mean(scores_window), epi, max_t, 0, "training",
+        save_scores(outcomes, algo, np.mean(scores_window), epi, max_t, 1, "training",
                     eps_start, eps_end, eps_decay, fname)
 
         env.close()
@@ -147,7 +147,23 @@ def main():
         # plot the scores
         plot_losses(losses, algo, epi)
         # save scores
-        save_scores(outcomes, algo, np.mean(scores_window), epi, max_t, 0, "training",
+        save_scores(outcomes, algo, np.mean(scores_window), epi, max_t, 1, "training",
+                    eps_start, eps_end, eps_decay, fname)
+
+        env.close()
+    elif args.mode == "training" and algo == "8":  # Dueling DQN, with Noisy and NO prioritary buffer
+        # create DQN agent
+        agent = DDQN_Agent(state_size=state_size, action_size=action_size, seed=0, prioritary_buffer=False,
+                 noisy=True,)
+        # train Agent
+        scores, scores_window, epi, losses = dqn_runner(env, brain_name, agent, algo, n_episodes, max_t,
+                                                        eps_start, eps_end, eps_decay)
+        # plot the scores
+        plot_scores(scores, algo, epi)
+        # plot the scores
+        plot_losses(losses, algo, epi)
+        # save scores
+        save_scores(outcomes, algo, np.mean(scores_window), epi, max_t, 1, "training",
                     eps_start, eps_end, eps_decay, fname)
 
         env.close()
@@ -169,10 +185,14 @@ def main():
         elif algo == "6": # DQN n-Steps
             agent = DQN_N_steps_Agent(state_size=state_size, action_size=action_size, seed=0, n_step=3,
                                       train=False)
-        elif algo == "7":
+        elif algo == "7": # Rainbow Agent
             agent = DQN_Rainbow_Agent(state_size=state_size, action_size=action_size, seed=0, n_step=3,
                                       alpha=0.2, beta=0.6, prior_eps=1e-6, v_min=0.0, v_max=200.0,
                                       atom_size=51, num_frames=n_episodes, train=False)
+        elif algo == "8":
+            # Dueling DQN, with Noisy NO prioritary buffer
+            agent = DDQN_Agent(state_size=state_size, action_size=action_size, seed=0, prioritary_buffer=False,
+                               noisy=True, )
         # If object agent exists
         if agent != None:
             # load the weights from file
