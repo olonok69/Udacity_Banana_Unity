@@ -118,11 +118,11 @@ def main():
         env.close()
     elif args.mode == "training" and algo == "6":  # DQN n-Steps
         # create DQN agent
-        agent = DQN_N_steps_Agent(state_size=state_size, action_size=action_size, seed=0, n_step= 5,
-                 train = True)
+        agent = DQN_N_steps_Agent(state_size=state_size, action_size=action_size, seed=0, n_step=3,
+                                  train=True)
         # train Agent
         scores, scores_window, epi, losses = dqn_runner(env, brain_name, agent, algo, n_episodes, max_t,
-                                                        eps_start, eps_end, eps_decay)
+                                                            eps_start, eps_end, eps_decay)
         # plot the scores
         plot_scores(scores, algo, epi)
         # plot the scores
@@ -134,8 +134,8 @@ def main():
         env.close()
     elif args.mode == "training" and algo == "7":  # Rainbow DQN n-Steps
         # create DQN agent NoisyNet + DuelingNet + Categorical DQN + Prority Experience Replay and N-steps
-        agent = DQN_Rainbow_Agent(state_size=state_size, action_size=action_size, seed=10, n_step= 3,
-                                  alpha = 0.2,beta = 0.6, prior_eps= 1e-6, v_min = 0.0,  v_max = 200.0,
+        agent = DQN_Rainbow_Agent(state_size=state_size, action_size=action_size, seed=0, n_step= 3,
+                                  alpha = 0.2,beta = 0.6, prior_eps= 1e-6, v_min = 0.0,  v_max = 30.0,
                                   atom_size = 51, num_frames = n_episodes, train = True)
 
 
@@ -187,8 +187,8 @@ def main():
                                       train=False)
         elif algo == "7": # Rainbow Agent
             agent = DQN_Rainbow_Agent(state_size=state_size, action_size=action_size, seed=0, n_step=3,
-                                      alpha=0.2, beta=0.6, prior_eps=1e-6, v_min=0.0, v_max=200.0,
-                                      atom_size=51, num_frames=n_episodes, train=False)
+                                      alpha=0.2, beta=0.6, prior_eps=1e-6, v_min=0.0, v_max=30.0,
+                                      atom_size=51, num_frames=n_episodes, train=True)
         elif algo == "8":
             # Dueling DQN, with Noisy NO prioritary buffer
             agent = DDQN_Agent(state_size=state_size, action_size=action_size, seed=0, prioritary_buffer=False,
@@ -257,13 +257,19 @@ def main():
             env, brain_name, brain, action_size, env_info, state, state_size = load_env(worker_id, base_port)
             agent = DQN_N_steps_Agent(state_size=state_size, action_size=action_size, seed=0, n_step=3,
                                       train=False)
-        elif algo == "7":
+        elif algo == "7": # rainbow
             worker_id = 70
             base_port = 5017
             env, brain_name, brain, action_size, env_info, state, state_size = load_env(worker_id, base_port)
             agent = DQN_Rainbow_Agent(state_size=state_size, action_size=action_size, seed=11, n_step=3,
-                                      alpha=0.2, beta=0.6, prior_eps=1e-6, v_min=0.0, v_max=200.0,
+                                      alpha=0.2, beta=0.6, prior_eps=1e-6, v_min=0.0, v_max=30.0,
                                       atom_size=51, num_frames=n_episodes, train=False)
+        elif algo == "8":  # Dueling DQN, with Noisy and NO prioritary buffer
+            worker_id = 80
+            base_port = 5018
+            env, brain_name, brain, action_size, env_info, state, state_size = load_env(worker_id, base_port)
+            agent = DDQN_Agent(state_size=state_size, action_size=action_size, seed=0, prioritary_buffer=False,
+                 noisy=True,)
         # If object agent exists
         if agent != None:
             # load the weights from file
@@ -295,7 +301,6 @@ def main():
 
             with open("outputs/scores.pickle", 'wb') as handle:
                 pickle.dump(outputs, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
     elif args.mode == "compare":
         with open('outputs/scores.pickle', 'rb') as handle:
             outputs = pickle.load(handle)
@@ -339,7 +344,7 @@ def main():
 
             env.close()
             #time.sleep(90)
-        elif str(algo) == "3":  # DDQN No Prioritary Buffer
+        elif str(algo) == "3":  # Dueling DQN with Prioritary Buffer
             time1 = time.time()
             # load environment
             worker_id = 3
@@ -358,7 +363,6 @@ def main():
             outputs[str(algo)]['time'] = time2 - time1
 
             env.close()
-
         elif str(algo) == "4":  # Categorical DQN, No prioritary buffer
             time1 = time.time()
             # load environment
@@ -398,7 +402,6 @@ def main():
             time2 = time.time()
             outputs[str(algo)]['time'] = time2 - time1
             env.close()
-
         elif str(algo) == "6":  # DQN n-Steps
             time1 = time.time()
             # load environment
@@ -407,8 +410,8 @@ def main():
             env, brain_name, brain, action_size, env_info, state, state_size = load_env(worker_id, base_port)
             outputs[str(algo)] = {}
             # create DQN agent
-            agent = DQN_N_steps_Agent(state_size=state_size, action_size=action_size, seed=0, n_step=5,
-                                      train=False)
+            agent = DQN_N_steps_Agent(state_size=state_size, action_size=action_size, seed=0, n_step=3,
+                                      train=True)
             # train Agent
             scores, scores_window, epi, losses = all_dqn_runner(env, brain_name, agent, algo, n_episodes, max_t,
                                                             eps_start, eps_end, eps_decay)
@@ -427,9 +430,30 @@ def main():
             env, brain_name, brain, action_size, env_info, state, state_size = load_env(worker_id, base_port)
             outputs[str(algo)] = {}
             # create DQN agent
-            agent = DQN_Rainbow_Agent(state_size=state_size, action_size=action_size, seed=10, n_step=3,
-                                      alpha=0.2, beta=0.6, prior_eps=1e-6, v_min=0.0, v_max=200.0,
-                                      atom_size=51, num_frames=n_episodes, train=False)
+            agent = DQN_Rainbow_Agent(state_size=state_size, action_size=action_size, seed=0, n_step=3,
+                                      alpha=0.2, beta=0.6, prior_eps=1e-6, v_min=0.0, v_max=30.0,
+                                      atom_size=51, num_frames=n_episodes, train=True)
+
+            # train Agent
+            scores, scores_window, epi, losses = all_dqn_runner(env, brain_name, agent, algo, n_episodes, max_t,
+                                                            eps_start, eps_end, eps_decay)
+            outputs[str(algo)]['scores'] = scores
+            outputs[str(algo)]['epi'] = epi
+            outputs[str(algo)]['losses'] = losses
+            time2 = time.time()
+            outputs[str(algo)]['time'] = time2 - time1
+
+            env.close()
+        elif str(algo) == "8":  # Dueling DQN, with Noisy and NO prioritary buffer
+            time1 = time.time()
+            # load environment
+            worker_id = 8
+            base_port = 5012
+            env, brain_name, brain, action_size, env_info, state, state_size = load_env(worker_id, base_port)
+            outputs[str(algo)] = {}
+            # create DQN agent
+            agent = DDQN_Agent(state_size=state_size, action_size=action_size, seed=0, prioritary_buffer=False,
+                 noisy=True,)
 
             # train Agent
             scores, scores_window, epi, losses = all_dqn_runner(env, brain_name, agent, algo, n_episodes, max_t,

@@ -266,26 +266,31 @@ class Rainbow_DQN(nn.Module):
         self.value_layer = NoisyLinear(128, atom_size)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward method implementation."""
+        """
+    	Forward method implementation.
+        """
+
         dist = self.dist(x)
         q = torch.sum(dist * self.support, dim=2)
 
         return q
 
     def dist(self, x: torch.Tensor) -> torch.Tensor:
-        """Get distribution for atoms."""
+        """
+    	Get distribution for atoms/ Bins
+        """
         feature = self.feature_layer(x)
         adv_hid = F.relu(self.advantage_hidden_layer(feature))
         val_hid = F.relu(self.value_hidden_layer(feature))
-
+        # advantage layer shape number of output * number of atoms/bins
         advantage = self.advantage_layer(adv_hid).view(
-            -1, self.out_dim, self.atom_size
-        )
+            -1, self.out_dim, self.atom_size)
+        # value layer shape 1 * number of atoms/bins
         value = self.value_layer(val_hid).view(-1, 1, self.atom_size)
         q_atoms = value + advantage - advantage.mean(dim=1, keepdim=True)
-
+        # we apply the softmax function to the combined layer
         dist = F.softmax(q_atoms, dim=-1)
-        dist = dist.clamp(min=1e-3)  # for avoiding nans
+        dist = dist.clamp(min=1e-3)  # clapping for avoiding nans
 
         return dist
 

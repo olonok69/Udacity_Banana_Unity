@@ -75,11 +75,11 @@ def plot_scores_training_all():
     """
     plot all scores 2000 episodes
     """
-    with open('../outputs/scores.pickle', 'rb') as handle:
+    with open('./outputs/scores.pickle', 'rb') as handle:
         data = pickle.load(handle)
     labels = []
     text = f"DQN Agent ({max(data['1']['scores']).round(2)})"
-    labels.append(text)
+    labels.append("DQN Agent ")
     num_episodes = "2000"
     plt.figure(figsize=(16, 12))
     plt.subplot(111)
@@ -87,24 +87,27 @@ def plot_scores_training_all():
     plt.axhline(y=13, color='r', linestyle='dotted')
     plt.plot(np.arange(len(data['1']['scores'])), data['1']['scores'], label=text)
     text = f"Dueling DQN no Prioritary Buffer Agent ({max(data['2']['scores']).round(2)})"
-    labels.append(text)
+    labels.append("Dueling DQN no Prioritary Buffer Agent ")
     plt.plot(np.arange(len(data['2']['scores'])), data['2']['scores'], label=text)
     text = f"Dueling DQN with Prioritary Buffer Agent ({max(data['3']['scores']).round(2)})"
-    labels.append(text)
+    labels.append("Dueling DQN with Prioritary Buffer Agent ")
     plt.plot(np.arange(len(data['3']['scores'])), data['3']['scores'], label=text)
     text = f"Categorical DQN, no Prioritary Buffer Agent ({max(data['4']['scores']).round(2)})"
-    labels.append(text)
+    labels.append("Categorical DQN, no Prioritary Buffer Agent ")
     plt.plot(np.arange(len(data['4']['scores'])), data['4']['scores'], label=text)
     text = f"Dueling DQN, with Noisy and Prioritary Buffer Agent ({max(data['5']['scores']).round(2)})"
-    labels.append(text)
+    labels.append("Dueling DQN, with Noisy and Prioritary Buffer Agent ")
     plt.plot(np.arange(len(data['5']['scores'])), data['5']['scores'], label=text)
     text = f"DQN n-Steps Agent ({max(data['6']['scores']).round(2)})"
-    labels.append(text)
+    labels.append("DQN n-Steps Agent ")
     plt.plot(np.arange(len(data['6']['scores'])), data['6']['scores'], label=text)
     text = f"Rainbow Dueling DQN n-Steps Categorical + Noisy + Prioritary Buffer Agent " \
            f"({max(data['7']['scores']).round(2)})"
-    labels.append(text)
+    labels.append("Rainbow Dueling DQN n-Steps Categorical + Noisy + Prioritary Buffer Agent ")
     plt.plot(np.arange(len(data['7']['scores'])), data['7']['scores'], label=text)
+    text = f"Dueling DQN, with Noisy Layer Agent({max(data['8']['scores']).round(2)})"
+    labels.append("Dueling DQN, with Noisy Layer Agent ")
+    plt.plot(np.arange(len(data['8']['scores'])), data['8']['scores'], label=text)
     plt.ylabel('Score')
     plt.xlabel('Episode #')
     title = "Algorithm and Max Score"
@@ -116,7 +119,7 @@ def plot_losses_training_all():
     """
     plot all losses 2000 episodes
     """
-    with open('../outputs/scores.pickle', 'rb') as handle:
+    with open('./outputs/scores.pickle', 'rb') as handle:
         data = pickle.load(handle)
 
     # add each loss vector and plot it
@@ -139,6 +142,8 @@ def plot_losses_training_all():
     plt.plot(np.arange(len(data['6']['losses'])), data['6']['losses'], label=text)
     text = f"Rainbow Dueling DQN n-Steps Categorical + Noisy + Prioritary Buffer Agent ({min(data['7']['losses']).round(2)})"
     plt.plot(np.arange(len(data['7']['losses'])), data['7']['losses'], label=text)
+    text = f"Dueling DQN, with Noisy Layer Agent ({min(data['8']['losses']).round(2)})"
+    plt.plot(np.arange(len(data['8']['losses'])), data['8']['losses'], label=text)
     plt.ylabel('Loss')
     plt.xlabel('Episode #')
     title = "Algorithm and min Loss"
@@ -152,7 +157,7 @@ def plot_play_scores(labels):
 
     """
 
-    with open('../outputs/scores.pickle', 'rb') as handle:
+    with open('./outputs/scores.pickle', 'rb') as handle:
         data = pickle.load(handle)
 
     num_episodes = 2000
@@ -166,10 +171,10 @@ def plot_play_scores(labels):
         scores.append(data[key]['play'])
         sc = data[key]['play']
         types.append(key)
-        plt.bar(int(key), sc, label=labels[int(key) - 1])
+        plt.bar(int(key), sc, label=labels[int(key) - 1] + str(sc))
     plt.ylabel('Score')
     plt.xlabel('Algorithm #')
-    title = "Algorithm and max Score"
+    title = "Algorithm and reward in play mode"
     plt.legend(title=title)
     plt.ylim([0, 24])
     plt.tight_layout()
@@ -182,7 +187,7 @@ def plot_time_all(labels):
     """
     plot time to win env . Collect 13 yellow bananas
     """
-    with open('../outputs/scores.pickle', 'rb') as handle:
+    with open('./outputs/scores.pickle', 'rb') as handle:
         data = pickle.load(handle)
 
     num_episodes = 2000
@@ -196,12 +201,12 @@ def plot_time_all(labels):
         scores.append(data[key]['time'])
         sc = data[key]['time']
         types.append(key)
-        plt.bar(int(key), sc, label=labels[int(key) - 1])
+        plt.bar(int(key), sc, label=labels[int(key) - 1] + str(round(sc,0)))
     plt.ylabel('Time')
     plt.xlabel('Algorithm #')
-    title = "Algorithm and max Score"
+    title = "Algorithm and Time to solve Env"
     plt.legend(title=title)
-    plt.ylim([0, 10000])
+    plt.ylim([0, 20000])
     plt.tight_layout()
     plt.savefig(f'./images/time_scores_all.jpg')
 
@@ -211,7 +216,7 @@ def plot_episodes_to_solve_all(labels):
     """
     plot time to win env . Collect 13 yellow bananas
     """
-    with open('../outputs/scores.pickle', 'rb') as handle:
+    with open('./outputs/scores.pickle', 'rb') as handle:
         data = pickle.load(handle)
 
     num_episodes = 2000
@@ -225,10 +230,10 @@ def plot_episodes_to_solve_all(labels):
         scores.append(data[key]['time'])
         sc = data[key]['epi']
         types.append(key)
-        plt.bar(int(key), sc, label=labels[int(key) - 1])
+        plt.bar(int(key), sc, label=labels[int(key) - 1] + str(sc))
     plt.ylabel('Num Episodes')
     plt.xlabel('Algorithm #')
-    title = "Algorithm and max Score"
+    title = "Algorithm and number episodes to solve Env"
     plt.legend(title=title)
     plt.ylim([0, 2000])
     plt.tight_layout()
