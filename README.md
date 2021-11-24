@@ -108,10 +108,38 @@ also the script track the configuration of the algorithm and mode use on trainin
 and during training mode we save loss and rewards to finally plot them one the game finish, which is either after 2000
 episodes or where the agent reach 16 as reward in training
 
-Rewards
+Ex. Rewards
 ![rewards](./images/Picture3.png)
 
-Loss
-![Loss](./images/Picture4.png)
+### Mode plot
+after runing the application in mode compare and the compare_play, where the app collect information to later in mode 
+plot generate 5 graphs which compare the performance of the 8 solvers
+
+
+All algorithms Rewards after 2000 episodes
+
+![all_scores](./images/scores_all.jpg)
+
+All algorithms Loss after 2000 episodes
+
+![all_losses](./images/losses_all.jpg)
+
+All algorithms Number of Episodes to win the Environtment (collect 13 yellow bananas)
+
+![all_episodes](./images/episodes_scores_all.jpg)
+
+All algorithms Time to win the Environtment (collect 13 yellow bananas)
+
+![all_time](./images/time_scores_all.jpg)
+
+All algorithms mode play score with best policy
+
+![all_play](./images/play_scores_all.jpg)
+
+
+
+
+
+
 
 
