@@ -1,11 +1,11 @@
 # Udacity_Banana_Unity
-Udacity Project Navigation Report
+
 
 ### Introduction
-In this document I will cover the explanation and description of my solution to The Challenge project Navigation for
-the Deep Reinforcement Learning Nanodegree of Udacity. My solution covers 8 different algorithms as I wanted to 
-explore all possible improvements to the Vanilla deep RL DQN algorithm. The skeleton of this solution is based on 
-the coding Exercise Deep Q-Networks (lesson 2) of this program, while I also use other resources like books, or public 
+This repo contains my solution to The Challenge project Navigation for the project Navigation of the Deep Reinforcement 
+Learning Nanodegree of Udacity. My solution covers 8 different algorithms as I wanted to explore all possible 
+improvements to the Vanilla deep RL DQN algorithm. The skeleton of this solution is based on the coding Exercise 
+Deep Q-Networks (lesson 2) of this program, while I also use other resources like books, or public 
 information available that I will detail on the references.
 
 The application solves the environment with the following 8 implementations
