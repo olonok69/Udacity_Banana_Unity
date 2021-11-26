@@ -2,8 +2,8 @@
 
 
 ### Introduction
-This repo contains my solution to The Challenge project Navigation for the project Navigation of the Deep Reinforcement 
-Learning Nanodegree of Udacity. My solution covers 8 different algorithms as I wanted to explore all possible 
+This repo contains my solution to The Challenge for the project Navigation part of the Udacity Deep Reinforcement 
+Learning Nanodegree. My solution covers 8 different algorithms as I wanted to explore all possible 
 improvements to the Vanilla deep RL DQN algorithm. The skeleton of this solution is based on the coding Exercise 
 Deep Q-Networks (lesson 2) of this program, while I also use other resources like books, or public 
 information available that I will detail on the references.
@@ -76,9 +76,10 @@ My solution works as an stand alone application which run in a Windows Pro 10 64
 
 on the main directory run python main.py --mode [training|play|compare|compare_play|plot|hp_tuning] 
                                                 --type[1,2,3,4,5,6,7,8]
+
 both args are mandatory
 
---mode  training|play|compare|compare_play|plot --> Mandatory
+--mode  training|play|compare|compare_play|plot|hp_tuning --> Mandatory
 
 * training : Train and agent. Save a model policy if the agent get more or equals than 13 
 * play : play an agent with a save policy and report the score
@@ -98,6 +99,31 @@ both args are mandatory
 * Type 8--> Duelling DQN with Noisy layer No PBR
 
 Ex. python main.py --mode training --type 1
+### Directory Structure
+* env: the unity environment
+* images: Folder where I save plots during training and final plots
+* models: Folder where I save the operational models
+* monitor: Folder where I save a csv file where I am collecting information of experiments
+* outputs: Folder where I save a pickle file containing a dictionary which contains all data to build the final plots and this report
+* src: contains python scripts with classes to support the application
+* In the root I have the python scripts, and some cmd scripts to help to run in a loop the environment using different algorithms either during training phase or during play phase
+
+###files
+* root
+  - Main.py: Contains the logic which govern the 5 main operations modes
+  - Run.bat and run_play.bat are two cmd scripts to help me to run all solvers in a loop in training and play mode
+* In src folder
+  - Agents.py: contains classes which wrap the operation of the Banana env working with different algorithms and buffers. Additionally, some functions to operate the env in training or play mode
+  - Networks: contains different implementation of Neural Network architectures use by the agents to solve the environment
+  - Buffers.py: contains different buffer implementations. Senment_tree.py and sumtree.py contains classes only use by the different buffers.
+  - Hyper.py: contains functions and wrappers for hyper parameter tuning
+  - Utils.py: contains helpers to monitor, plot and instantiate the agents
+* in env folder
+  - Banana.exe and UnityPlayer.dll are the Unity Banana environment
+
+
+* ![img_3.png](./images/dir.png)
+
 
 the script during training is printing the average reward every episode
 
@@ -143,10 +169,10 @@ All algorithms mode play score with best policy
 
 ### Mode hp_tuning
 
-In mode hp_tuning and using library Hyperopt library, I setup and example of how to optimize parameters of an agent 
-using Bayesian Optimization. It it’s just a simple example but give you a grasp of how we can do it and optimize the 
+In mode hp_tuning and using library Hyperopt library, I setup an example of how to optimize parameters of an agent 
+using Bayesian Optimization. It it’s just a simple example but give you a grasp of how we can optimize the 
 parameters. There are other frameworks to optimize parameters like RL Baselines3 Zoo if we use Stable baselines library 
-or Ray for unity RL agents, but here as this is a tailor environment, I decided to use a general optimisation framework 
+or Ray for unity RL agents, but here as this is a tailored environment, I decided to use a general optimization framework 
 and also learn how to use it in Deep RL.
 Here in this simple configuration, I am optimizing 3 parameters of the Vanilla DQN agent model and I limit the trials 
 to 30 for this experiment
