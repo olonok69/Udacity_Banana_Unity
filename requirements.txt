@@ -13,3 +13,4 @@ pandas
 scipy
 ipykernel
 pyglet==1.5.21
+hyperopt

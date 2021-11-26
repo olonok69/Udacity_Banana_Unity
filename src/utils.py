@@ -274,13 +274,13 @@ def save_scores(outcomes, algo, score, episodes, max_t, PER, mode, eps_start, ep
     outcomes.to_csv(fname, index=False)
     return
 
-def load_env(worker_id, base_port):
+def load_env(worker_id, base_port, file='./env/Banana.exe'):
     """
     load Unity Environtment
     :param worker_id: ID env
     :param base_port: comunications port with unity agent
     """
-    env = UnityEnvironment(file_name="./env/Banana.exe", worker_id=worker_id, base_port=base_port)
+    env = UnityEnvironment(file_name=file, worker_id=worker_id, base_port=base_port)
 
     # get the default brain
     brain_name = env.brain_names[0]

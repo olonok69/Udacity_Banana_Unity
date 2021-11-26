@@ -25,9 +25,11 @@ class DQN_Agent():
     def __init__(self, state_size
                  , action_size,
                  seed,
+                 lr=LR,
+                 gamma=GAMMA,
+                 batch_size=BATCH_SIZE,
                  soft = False,
-                 target_update = 200
- ):
+                 target_update = 200):
         """
         Initialize an Agent object.
 
@@ -45,6 +47,9 @@ class DQN_Agent():
         self.action_size = action_size # action space size
         self.seed = random.seed(seed)
         self.soft = soft # use soft update. each 4 episodes and apply TAU. # default False then apply hard update
+        self.lr = lr
+        self.gamma = gamma
+        self.batch_size = batch_size
 
         # Q-Network local and target
         self.qnetwork_local = DQN(state_size, action_size).to(device)
@@ -52,7 +57,7 @@ class DQN_Agent():
         self.qnetwork_target.load_state_dict(self.qnetwork_local.state_dict())
         self.qnetwork_target.eval()
         # optimizer
-        self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
+        self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=self.lr)
         # Replay memory. Simply Buffer
         self.memory = ReplayBuffer(BUFFER_SIZE)
         # Initialize time step (for updating every UPDATE_EVERY steps)
@@ -79,14 +84,14 @@ class DQN_Agent():
         self.t_step = (self.t_step + 1) % UPDATE_EVERY
         if self.t_step == 0 and self.soft == True: # sampling from Memory
             # If enough samples are available in memory, get random subset and learn
-            if len(self.memory) > BATCH_SIZE:
-                experiences = self.memory.sample(BATCH_SIZE)
-                self.learn(experiences, GAMMA)
+            if len(self.memory) > self.batch_size:
+                experiences = self.memory.sample(self.batch_size)
+                self.learn(experiences, self.gamma)
         else:
             # If enough samples are available in memory, get random subset and learn
-            if len(self.memory) > BATCH_SIZE:
-                experiences = self.memory.sample(BATCH_SIZE)
-                self.learn(experiences, GAMMA)
+            if len(self.memory) > self.batch_size:
+                experiences = self.memory.sample(self.batch_size)
+                self.learn(experiences, self.gamma)
 
     def act(self, state, eps=0.):
         """

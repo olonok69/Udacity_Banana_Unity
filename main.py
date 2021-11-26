@@ -5,11 +5,13 @@ import os.path
 import pandas as pd
 import pickle
 import time
+from src.hyper import hp_tuning
 
 def main():
     # Command line Arguments
     parser = argparse.ArgumentParser("DQN")
-    parser.add_argument("--mode", type=str, help="training , play, compare, complare_play, plot", required=True)
+    parser.add_argument("--mode", type=str, help="training , play, compare, complare_play, plot, hp_tuning",
+                        required=True)
     parser.add_argument("--type", type=str, help="type 1-->Vanilla DQN , type 2--> Duelling DQN PBR, type 3--> Dueling"
                                                  "DQN, no PBR, type 4-->categorical DQN, type 5--> Duelling DQN"
                                                  " with Noisy layer and PBR, Type 6--> DQN n-steps, type 7 --> "
@@ -17,7 +19,7 @@ def main():
     args = parser.parse_args()
 
     #load environment
-    if args.mode != "compare" and args.mode != "compare_play" and args.mode != "plot":
+    if args.mode != "compare" and args.mode != "compare_play" and args.mode != "plot" and args.mode != "hp_tuning":
         worker_id= 1
         base_port= 5005
         env, brain_name, brain, action_size, env_info, state, state_size = load_env(worker_id, base_port)
@@ -480,6 +482,13 @@ def main():
         plot_time_all(labels)
         # plot number of episodes to solve the environtment. 13 yellow bananas. all algorithms
         plot_episodes_to_solve_all(labels)
+    elif args.mode == "hp_tuning":
+        # hyper parameter tuning DQN agent
+        best_params, trials = hp_tuning("./env/Banana.exe")
+        print (best_params)
+        with open("outputs/trials.pickle" , 'wb') as handle:
+            pickle.dump(trials, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 
 if __name__ == '__main__':
     main()

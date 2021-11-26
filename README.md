@@ -10,13 +10,13 @@ information available that I will detail on the references.
 
 The application solves the environment with the following 8 implementations
 - Mode 1 Plain Deep DQN vanilla. (Epsilon Greedy algo for action selection)
-- Mode 2 Duelling DQN  (Epsilon Greedy algo for action selection)
-- Mode 3 Duelling DQN with Priority Experience Replay (Epsilon Greedy algo for action selection)
+- Mode 2 Dueling DQN  (Epsilon Greedy algo for action selection)
+- Mode 3 Dueling DQN with Priority Experience Replay (Epsilon Greedy algo for action selection)
 - Mode 4 Categorical DQN (Epsilon Greedy algo for action selection)
-- Mode 5 Duelling DQN, with PER replay and Noisy Layer for exploration. (Noisy Layer for action selection)
+- Mode 5 Dueling DQN, with PER replay and Noisy Layer for exploration. (Noisy Layer for action selection)
 - Mode 6 DQN n-steps (Epsilon Greedy algo for action selection)
-- Mode 7 Rainbow DQN (Duelling DQN + n-Steps + Categorical + Noisy Layer + PER) (Noisy Layer for action selection)
-- Mode 8 Duelling DQN with Noisy Layer (Noisy Layer for action selection)
+- Mode 7 Rainbow DQN (Dueling DQN + n-Steps + Categorical + Noisy Layer + PER) (Noisy Layer for action selection)
+- Mode 8 Dueling DQN with Noisy Layer (Noisy Layer for action selection)
 
 ### Installation
 My solution works as an stand alone application which run in a Windows Pro 10 64 bits command line window 
@@ -74,18 +74,20 @@ My solution works as an stand alone application which run in a Windows Pro 10 64
 
 ### how to run this project
 
-on the main directory run python main.py --mode [training|play|compare|compare_play|plot] --type[1,2,3,4,5,6,7,8]
+on the main directory run python main.py --mode [training|play|compare|compare_play|plot|hp_tuning] 
+                                                --type[1,2,3,4,5,6,7,8]
 both args are mandatory
 
---mode  training|play|compare|compare_play|plot  Mandatory
+--mode  training|play|compare|compare_play|plot --> Mandatory
 
 * training : Train and agent. Save a model policy if the agent get more or equals than 13 
 * play : play an agent with a save policy and report the score
 * compare : train all solvers and collect information for reporting
 * compare_play : play all solvers and collect information for reporting
 * plot : generate the plot from information collected in compare modes
+* hp_tuning :  hyper parameter tuning example
 
---type  Mandatory
+--type --> Mandatory
 * type 1-->Vanilla DQN 
 * type 2--> Duelling DQN PBR 
 * type 3--> Duelling DQN no PBR
@@ -110,7 +112,10 @@ episodes or where the agent reach 16 as reward in training
 
 Ex. Rewards
 ![rewards](./images/Picture3.png)
-
+### Mode Compare
+run all solvers 2000 episodes and collect statistics. Use run.bat
+### Mode Compare_plot
+Run all solvers in mode play and collect statistics. Use run_play.bat
 ### Mode plot
 after runing the application in mode compare and the compare_play, where the app collect information to later in mode 
 plot generate 5 graphs which compare the performance of the 8 solvers
@@ -136,10 +141,35 @@ All algorithms mode play score with best policy
 
 ![all_play](./images/play_scores_all.jpg)
 
+### Mode hp_tuning
+
+In mode hp_tuning and using library Hyperopt library, I setup and example of how to optimize parameters of an agent 
+using Bayesian Optimization. It it’s just a simple example but give you a grasp of how we can do it and optimize the 
+parameters. There are other frameworks to optimize parameters like RL Baselines3 Zoo if we use Stable baselines library 
+or Ray for unity RL agents, but here as this is a tailor environment, I decided to use a general optimisation framework 
+and also learn how to use it in Deep RL.
+Here in this simple configuration, I am optimizing 3 parameters of the Vanilla DQN agent model and I limit the trials 
+to 30 for this experiment
+
+![hp](./images/hp.png)
 
 
+### References
 
-
-
-
+1.	V. Mnih et al., "Human-level control through deep reinforcement learning." Nature, 518 (7540):529–533, 2015.
+2.	van Hasselt et al., "Deep Reinforcement Learning with Double Q-learning." arXiv preprint arXiv:1509.06461, 2015.
+3.	T. Schaul et al., "Prioritized Experience Replay." arXiv preprint arXiv:1511.05952, 2015.
+4.	Z. Wang et al., "Dueling Network Architectures for Deep Reinforcement Learning." arXiv preprint arXiv:1511.06581, 2015.
+5.	M. Fortunato et al., "Noisy Networks for Exploration." arXiv preprint arXiv:1706.10295, 2017.
+6.	M. G. Bellemare et al., "A Distributional Perspective on Reinforcement Learning." arXiv preprint arXiv:1707.06887, 2017.
+7.	R. S. Sutton, "Learning to predict by the methods of temporal differences." Machine learning, 3(1):9–44, 1988.
+8.	M. Hessel et al., "Rainbow: Combining Improvements in Deep Reinforcement Learning." arXiv preprint arXiv:1710.02298, 2017.
+9.	https://github.com/Curt-Park/rainbow-is-all-you-need
+10.	Hands-on Reinforcement Learning for Games (Book) Michael Lanham
+11.	Grokking Deep Reinforcement Learning (Book) Miguel Morales
+12.	Hands-on Reinforcement Learning with Python (book) by Sudharsan Ravichandiran
+13.	binary sum-tree. See Appendix B.2.1. in https://arxiv.org/pdf/1511.05952.pdf. Adapted implementation from https://github.com/jaromiru/AI-blog/blob/master/SumTree.py  
+14.	SegmentTree from OpenAi repository. https://github.com/openai/baselines/blob/master/baselines/common/segment_tree.py
+15.	PER implementation. https://github.com/rlcode/per/blob/master/prioritized_memory.py
+16.	Noisy Layers . https://github.com/higgsfield/RL-Adventure/blob/master/5.noisy%20dqn.ipynb    https://github.com/Kaixhin/Rainbow/blob/master/model.py
 
